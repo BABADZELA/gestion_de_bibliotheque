@@ -3,6 +3,29 @@ from dataclasses import dataclass
 from db import conn, cur
 from user import User
 
+def lister():
+        for row in cur.execute("SELECT * FROM Livre"):
+            print(f" - Titre: {row[0]}, écrit par: {row[1]}, (ISBN: {row[2]}, Type de livre: {row[3]})")
+        conn.close()
+
+def statistiques():
+    # Nombre de livre dans la base
+    nombre_de_livre = cur.execute('SELECT COUNT(*) FROM Livre').fetchone()
+    # Nombre de livre emprunté
+    nombre_de_livre_emprunté = cur.execute('SELECT COUNT(*) FROM Livre WHERE disponible is False').fetchone()
+    # nombre total d'utilisateur
+    nombre_d_utilisateur = cur.execute('SELECT COUNT(*) FROM User').fetchone()
+    # Livres le plus emprunté
+    livre_emprunte = cur.execute('SELECT isbn FROM Emprunt WHERE nombre = MAX(nombre)').fetchone()
+
+    resultat = """===============QUELQUES STATISTIQUES=============================
+        - Nombre de livre: %s
+        - Nombre total d'utilisateur: %s
+        - Nombre de livre emprunté: %s
+        - L'ISBN du livre le plus emprunté: %s""".format(nombre_de_livre, nombre_d_utilisateur, nombre_de_livre_emprunté, livre_emprunte)
+    
+    print(resultat)
+conn.close()
 
 @dataclass
 class Livre:
@@ -90,21 +113,11 @@ class Livre:
         conn.commit()
         conn.close()
 
-    def lister():
-        for row in cur.execute("SELECT * FROM Livre"):
-            print(row)
-
-    def statistiques(self):
-        pass
-"""     o	Nombre total de livres
-o	Nombre de livres empruntés
-o	Nombre total d'utilisateurs
-o	Livres les plus empruntés """
-
-
 
 if __name__ == '__main__':
-    livre = Livre("Quichotte","Miguel de Cervantes","978-3322114455", "papier")
+    lister()
+    # statistiques()
+    """ livre = Livre("Quichotte","Miguel de Cervantes","978-3322114455", "papier")
     # livre.supprimer('978-3322114455')
     if livre:
-        print("Super")
+        print("Super") """
