@@ -51,3 +51,5 @@ Tel que codé l'emprunteur doit obligatoirement être un user de type "étudiant
 
 Pour la saisie du nom de l'utlisation dans le terminal je n'ai pas tenu compte des cas ou l'utilisateur 
 saisie des caractères spéciaux
+
+Pour la foonction je n'ai pas gérer les espaces et les accents

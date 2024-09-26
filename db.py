@@ -14,7 +14,7 @@ cur.execute('''
 
 cur.execute('''
     CREATE TABLE IF NOT EXISTS Emprunt (
-        isbn TEXT NOT NULL UNIQUE,
+        isbn TEXT NOT NULL,
         emprunteur VARCHAR(50) NOT NULL,
         nombre INTEGER DEFAULT 0
     )
@@ -53,6 +53,11 @@ if __name__ == '__main__':
     # Insertion des données dans la base de données
     cur.executemany("INSERT INTO Livre VALUES(:titre, :auteur, :isbn, :type, :disponible)", livres)
     cur.executemany("INSERT INTO User VALUES(:nom, :type_utilisateur)", users)
+
+    """ livre = cur.execute("SELECT * FROM Livre WHERE isbn LIKE ? ", ('978-1234567890',)).fetchall()
+    for row in livre:
+        print(row[4]) """
+
 
     conn.commit()
     conn.close()
