@@ -42,6 +42,11 @@ la table emprunt se remplit automatiquement lorsque qu'un livre est emprunté
 Dans la table Livre j'ai rajouté la colonne disponibible qui me permet de stocker
 un booléan pour savoir si un livre peut être emprunté ou pas 
 
+### Utilisation
+La base a déjà été créer ainsi que les tables. Les d'insertions des données dans la base ont
+donc été commentées afin d'éviter les erreurs.
+
+Tel que codé l'emprunteur doit obligatoirement être un user de type "étudiant"
 ### Piste d'amélioration
 
 Pour la saisie du nom de l'utlisation dans le terminal je n'ai pas tenu compte des cas ou l'utilisateur 
