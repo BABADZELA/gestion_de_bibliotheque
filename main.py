@@ -1,29 +1,23 @@
-import logging
 import typer
-from typing import Optional
-from pathlib import Path
-import sqlite3
-
-
-import livre, user, db, bibliotheque
-
-# app = typer.Typer()
-
 import emoji
 
-def temp_emprunt():
-    isbn = input("Entrez l'ISBN du livre à emprunter: ")
+import livre, db, bibliotheque, user
+
+def temp_emprunt(emprunter):
+    isbn = typer.prompt("Entrez l'ISBN du livre à emprunter: ")
     # Avant de pouvoir emprunter un livre on doit vérifier qu'il est bien disponible
     with db.conn:
         cur = db.conn.cursor()
-        livre_existe = cur.execute("SELECT * FROM Livre WHERE isbn LIKE :isbn and disponible = 1", [isbn]).fetchall()
+        livre_disponible = cur.execute("SELECT * FROM Livre WHERE isbn LIKE :isbn and disponible = 1", [isbn]).fetchall()
 
-        if not livre_existe:
+        if not livre_disponible:
             typer.secho("Le livre n'est pas disponible ou isbn saisie est incorrect", fg='red')
         else:
-            for row in livre_existe:
-                test = livre.Livre(row[0], row[1], row[2], row[3])
-            test.emprunter(isbn, emprunter)
+            for row in livre_disponible:
+                livre_temp = livre.Livre(row[0], row[1], row[2], row[3])
+
+            bibliotheque.Bibliotheque().emprunter_un_livre(livre_temp.isbn, emprunter)
+            # test.emprunter(isbn, emprunter)
 
             typer.secho("Le livre a bien été emprunté", fg='green')
 
@@ -38,18 +32,14 @@ emoji_p = emoji.emojize(":thumbs_up:", language='alias')
 typer.echo("GESTION DE BIBLIOTHEQUE")
 for index, choice in enumerate(choices, start=1):
     typer.echo(f"{index}. {choice}")
-choix = typer.prompt("Choisissez un livre en entrant son numéro", type=str)
-
-# choix = input(f"Veuillez choisir un chiffre parmi la liste ci-dessus {emoji_p} ")
+choix = typer.prompt(f"Veuillez choisir un chiffre parmi la liste ci-dessus {emoji_p}", type=str)
 
 def get_message() -> str:
-    # typer.secho(message_a_affichager, fg=typer.colors.GREEN)
     # Afficher la liste des choix
     typer.echo("GESTION DE BIBLIOTHEQUE")
     for index, choice in enumerate(choices, start=1):
         typer.echo(f"{index}. {choice}")
-    choix = typer.prompt("Choisissez un livre en entrant son numéro", type=str)
-    # choix = input(f"Veuillez choisir un chiffre parmi la liste ci-dessus {emoji_p} ")
+    choix = typer.prompt(f"Veuillez choisir un chiffre parmi la liste ci-dessus {emoji_p}", type=str)
     return choix
 
 
@@ -61,20 +51,22 @@ while choix not in choices_number:
 while choix != '9':
 
     if choix == '1':
-        titre = input("Veuillez saisir le titre du livre : ").lower()
-        auteur = input("Veuillez saisir l'auteur du livre : ").lower()
-        isbn = input("Veuillez saisir l'ISBN du livre : ").lower()
+        ## On récupère tous les parametres necessaires à la création d'un livre
+        titre = typer.prompt("Veuillez saisir le titre du livre ").lower()
+        auteur = typer.prompt("Veuillez saisir l'auteur du livre ").lower()
+        isbn = typer.prompt("Veuillez saisir l'ISBN du livre ").lower()
 
         with db.conn:
             cur = db.conn.cursor()
+            #### Tant que l'isbn saisie est déjà dans la base, on redemande à l'utulisateur de saisir une nouvelle valeur
             while (isbn,) in cur.execute("SELECT isbn FROM Livre WHERE isbn LIke ?", (isbn,)).fetchall():
                 typer.secho("L'ISBN saisie existe déjà dans la base", fg="red")
-                isbn = input("Veuillez saisir l'ISBN du livre : ").lower()
+                isbn = typer.prompt("Veuillez saisir l'ISBN du livre ").lower()
 
-        type_livre = input("Veuillez saisir le type du livre (papier / numerique) : ").lower()
+        type_livre = typer.prompt("Veuillez saisir le type du livre (papier / numerique) ", type=str).lower()
 
         while type_livre not in ['papier', 'numerique']:
-            type_livre = input("Veuillez saisir le type du livre (papier / numerique) : ").lower()
+            type_livre = typer.prompt("Veuillez saisir le type du livre (papier / numerique) ", type=str).lower()
 
         nouveau_livre = livre.Livre(titre, auteur, isbn, type_livre)
 
@@ -85,15 +77,16 @@ while choix != '9':
 
     elif choix == '2':
         # Avant de supprimer un livre, on vérifie que cet utulisateur a bien les droits de suppression
-        nom_utulisateur = input("Utulisateur : ").lower()
-        isbn = input("Entrez l'ISBN du livre à supprimer : ")
+        nom_utulisateur = typer.prompt("Utulisateur ").lower()
+        isbn = typer.prompt("Entrez l'ISBN du livre à supprimer ")
         with db.conn:
             cur = db.conn.cursor()
+            ### On qu'il existe bien un utulisateur dans la base user correspondant à la saisie de l'utulisateur
             nom_dans_base = cur.execute("SELECT * FROM User WHERE nom LIKE ?", (nom_utulisateur,)).fetchone()
             if not nom_dans_base:
                 typer.secho(f"L'utulisateur: {nom_utulisateur} n'existe pas, veuillez d'abord l'ajouter", fg='red')
             else:
-                # cet utilisateur existe, on vérifie donc qu'il ne s'agit pas d'un étudiant
+                # Si utilisateur existe, on vérifie qu'il ne s'agit pas d'un étudiant
                 nom, type_utulisateur = nom_dans_base
                 if type_utulisateur == 'etudiant':
                     typer.secho(f"L'utulisateur: {nom_utulisateur} n'a pas de droit de suppression ", fg='red')
@@ -102,30 +95,33 @@ while choix != '9':
                     cur = db.conn.cursor()
                     livre_existe = cur.execute("SELECT * FROM Livre WHERE isbn LIKE :isbn ", [isbn]).fetchall()
 
+                    ### On vérifie qu'il existe bien un livre dans base avec ISBN saisie par l'utulisateur
                     if not livre_existe:
                         typer.secho("L'ISBN du livre que vous souhaitez supprimer n'existe pas", fg='red')
                     else:
+                        ## Le livre existe, on le recree et on le stocke dans la variable test
                         for row in livre_existe:
                             test = livre.Livre(row[0], row[1], row[2], row[3])
                         
                         confirm = typer.confirm(f"Souhaitez-vous vraiment supprimer le livre trouvé ?")
 
                         if confirm:
+                            ########## Suppression du livre
                             suppression = test.supprimer()
                             typer.secho(suppression, fg='green')
                         else:
                             typer.secho("Action de suppression annulée", fg='red')
 
     elif choix == '3':
-        saisie = input("Comment souhaitez-vous réaliser votre recherche : (isbn / auteur) ").lower()
+        saisie = typer.prompt("Comment souhaitez-vous réaliser votre recherche : (isbn / auteur) ").lower()
 
         while saisie not in ['isbn', 'auteur']:
-            saisie = input("ISBN / Auteur)").lower()
+            saisie = typer.prompt("(ISBN / Auteur)", type=str).lower()
 
         if saisie == 'isbn':
-            isbn = input("Entrez l'ISBN: ")
+            isbn = typer.prompt("Entrez l'ISBN: ", type=str)
         else:
-            auteur = input("Entrez le nom de l'auteur: ")
+            auteur = typer.prompt("Entrez le nom de l'auteur: ", type=str)
 
         with db.conn:
             cur = db.conn.cursor()
@@ -137,23 +133,24 @@ while choix != '9':
         
 
     elif choix == '4':
-        nom_utulisateur = input("Utulisateur: ").lower()
+        nom_utulisateur = typer.prompt("Utulisateur: ").lower()
 
         with db.conn:
             cur = db.conn.cursor()
             nom_dans_base = cur.execute("SELECT nom FROM User WHERE nom LIKE ?", (nom_utulisateur,)).fetchall()
             # On vérifie que le prénom saisie par l'utulisateur ne se trouve pas déjà dans la base
-            # Si c'est le cas on redemande de saisir une nouvelle valeur
+            # Si c'est le cas on lui redemande de saisir une nouvelle valeur
             while nom_dans_base:
                 typer.secho(f"L'utulisateur': {nom_utulisateur} est déjà utilisé", fg='red')
-                nom_utulisateur = input("Veuillez saisir un autre nom : ").lower()
+                nom_utulisateur = typer.prompt("Veuillez saisir un autre nom ", type=str).lower()
                 nom_dans_base = cur.execute("SELECT nom FROM User WHERE nom LIKE ?", (nom_utulisateur,)).fetchall()
 
-        type_utulisateur = input("type d'utulisateur: (admin / etudiant) ").lower()
+        # Entrer le type d'utulisateur (admin ou etudiant sans accent)
+        type_utulisateur = typer.prompt("type d'utulisateur: (admin / etudiant) ", type=str).lower()
 
         # Que deux choix possibles à l'utulisateur
         while type_utulisateur not in ['admin', 'etudiant']:
-            type_utulisateur = input("type d'utulisateur: (admin / etudiant) ")
+            type_utulisateur = typer.prompt("type d'utulisateur: (admin / etudiant) ")
 
         # Tout est ok, on insert l'utulisateur dans la base
         with db.conn:
@@ -165,7 +162,7 @@ while choix != '9':
     elif choix == '5':
         # Avant de pouvoir emprunter un livre, on vérifie d'abord que l'emprunteur se trouve
         # bel et bien dans la table User
-        emprunter = input("Nom de l'emprunteur du livre: ").lower()
+        emprunter = typer.prompt("Nom de l'emprunteur du livre ", type=str).lower()
         with db.conn:
             cur = db.conn.cursor()
             nom_dans_base = cur.execute("SELECT nom FROM User WHERE nom LIKE ?", (emprunter,)).fetchall()
@@ -180,9 +177,10 @@ while choix != '9':
                     typer.secho("action annulée", fg='red')
                     
                 else:
-                    type_utulisateur = input("type d'utulisateur: (admin / etudiant) ")
+                    ######### Après avoir insérer cet utulisateur, on continue le processus d'emprunt avec la demande du type d'utulisateur
+                    type_utulisateur = typer.prompt("type d'utulisateur: (admin / etudiant) ")
                     while type_utulisateur not in ['admin', 'etudiant']:
-                        type_utulisateur = input("type d'utulisateur: (admin / etudiant) ")
+                        type_utulisateur = typer.prompt("type d'utulisateur: (admin / etudiant) ")
                     
                     # Tout est ok, on insert le nouvel utulusateur dans la base
                     with db.conn:
@@ -191,33 +189,27 @@ while choix != '9':
 
                     typer.secho(f"L'utulisateur: {emprunter} a bien été ajouté", fg='green')
 
-                    temp_emprunt()
+                    temp_emprunt(emprunter)
 
 
             else:
 
-                temp_emprunt()
+                temp_emprunt(emprunter)
                 
 
     elif choix == '6':
-        isbn = input("Entrez l'ISBN du livre à retourner : ")
-        emprunteur = input("Entrez le nom de l'emprunteur: ").lower()
-        # Avant de pouvoir emprunter un livre on doit vérifier qu'il est bien disponible
-        with db.conn:
-            cur = db.conn.cursor()
-            livre_existe = cur.execute("SELECT isbn FROM Emprunt WHERE isbn LIKE :isbn and emprunteur LIKE :emprunteur ", [isbn, emprunteur]).fetchall()
+        isbn = typer.prompt("Entrez l'ISBN du livre à retourner ", type=str)
+        emprunteur = typer.prompt("Entrez le nom de l'emprunteur ", type=str).lower()
 
-            if not livre_existe:
-                typer.secho("ISBN ou le nom de l'emprunteur saisie est incorrect", fg='red')
-            else:
-                cur.execute('UPDATE Livre SET disponible = 1 WHERE isbn = ?', (isbn,))
-                typer.secho("Votre retour a bien été pris en compte", fg='blue')
+        retour = bibliotheque.Bibliotheque().retourner_un_livre(isbn, emprunteur)
+        typer.secho("Votre retour a bien été pris en compte", fg='blue')
 
     elif choix == '7':
         bibliotheque.Bibliotheque().afficher_les_livres()
     
-    else: 
-        bibliotheque.Bibliotheque().statistiques()
+    elif choix == '8':
+        resultat = bibliotheque.Bibliotheque().statistiques()
+        typer.secho(resultat, fg='green')
 
     choix = get_message()
 
@@ -226,4 +218,4 @@ db.conn.close()
 
 
     
-print("cest okay")
+print("TERMINE")

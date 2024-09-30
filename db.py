@@ -25,7 +25,7 @@ cur.execute('''
         titre TEXT NOT NULL,
         auteur TEXT NOT NULL,
         isbn TEXT NOT NULL UNIQUE,
-        type VARCHAR(50) NOT NULL,
+        type_livre VARCHAR(50) NOT NULL,
         disponible BOOLEAN NOT NULL CHECK (disponible IN (0, 1))
     )
 ''')

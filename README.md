@@ -3,53 +3,45 @@
 Ce projet s'exécute dans le terminal
 
 ## Fichiers
-J'ai découpé le projet en trois ficheirs afin de séparer les fonctionnalités.
+Le projet contient plusieurs fichiers dont quatre principaux:
 
-Le projet contient 3 fichiers python:
-- main qui gère tout le fonctionnement de l'application
-- livre contient l'implémentation de la classe Livre 
-- db comme son nom l'indique, il contient tout le code concernant la création et l'insertion des données dans la base.
+- main.py qui gère tout le fonctionnement de l'application
+- livre.py contient l'implémentation de la classe Livre 
+- db.py comme son nom l'indique, il contient tout le code qui concerne la création et l'insertion des données dans la base.
+Pour avoir une base préremplie avec des données dans les différentes tables (Livre, User), il est recommander d'exécuter
+ce fichier en premier.
 
-J'ai opté pour l'insertion de 10 lignes dans la base de données pour nos tests. 
-L'utilisatuer pourra bien sur par la suite ajouter plusieurs autres livre.
+J'ai opté pour l'insertion de 10 lignes dans la table "Livre" et 2 utulisateurs dans la table "User" de la base de données pour nos tests. 
+L'utulisatuer pourra bien sûr par la suite ajouter plusieurs autres livres et users.
 
 ### Fonctionnement de l'application
 
-L'utilisateur doit au préalable se connecter un utilisateur en spécifiant s'il s'agit d'un administrateur ou d'un étudiant.
-- Un administrateur peut ajouter et supprimer des livres 
-- Un étudiant peut emprunter ou lister des livres.
+Après avoir exécuté le fichier db.py necessaire à  la création de la base de données, on exécute le fichier main.py pour lancer l'application.
 
+Attention!!!!! la création d'un utilisateur nécessite de spécifier de quel utulisateur s'agit-il.
+- Un administrateur (admin) a tous les droits sur base et peux donc tout faire 
+- Un étudiant a un accès restreint, il peut par exemple emprunter ou lister des livres, mais pas supprimer des livres.
 
-## Statistique
-Pour les besoins de statistique j'ai rajouté la table emprunt qui contient 2 champs:
-- isbn
-- nombre de fois que celui-ci a été emprunté
-- user qui emprunte le livre
+Après avoir exécuter la fonction main.py, l'utulisateur a les choix suivants pour les gestion de la bibliotheque:
 
-Une fois qu'un livre est emprunté, celui-ci est stocké dans cette table. S'il est emprunté encore une fois,
-la colonne nombre est incrémentée de 1. isbn contenant le nombre le plus élevé sera le livre le plus emprunté.
+1. Il peut jouter un livre en spécifiant (le titre, l'auteur, l'isbn, le type du livre(papier/numerique))
+2. Il peut supprimer un livre si son type est "admin"
+3. Rechercher un livre par son ISBN ou le nom d'auteur
+4. Ajouter un utlisateur
+5. Emprunter un livre, sachant qu'un livre déjà emprunté ne plus être emprunté à nouveau à moins de le retourner et par la suite le réemprunter
+6. Retourner un livre
+7. Lister l'ensemble des livres contenues dans la base de données
+8. Afficher quelques statistiques
+9. QUITTER
 
 ## Base de données
 
-3 tables pour l'instant dans la base;
-- Livre
-- User
-- Emprunt
+3 tables dans la base;
+- Livre (titre: str, auteur: str, isbn: str, type_livre: (papier, numerique), disponible: bool)
+Lorsqu'un livre est emprunté la colonne disponible passe false permettant ainsi de plus le réemprunter
+- User (nom, type_utulisateur (admin/etudiant))
+- Emprunt (isbn: str, nombre: int)
 
-
-la table emprunt se remplit automatiquement lorsque qu'un livre est emprunté 
-
-Dans la table Livre j'ai rajouté la colonne disponibible qui me permet de stocker
-un booléan pour savoir si un livre peut être emprunté ou pas 
-
-### Utilisation
-La base a déjà été créer ainsi que les tables. Les d'insertions des données dans la base ont
-donc été commentées afin d'éviter les erreurs.
-
-Tel que codé l'emprunteur doit obligatoirement être un user de type "étudiant"
-### Piste d'amélioration
-
-Pour la saisie du nom de l'utlisation dans le terminal je n'ai pas tenu compte des cas ou l'utilisateur 
-saisie des caractères spéciaux
-
-Pour la foonction je n'ai pas gérer les espaces et les accents
+la colonne "nombre" de la table Emprunt permet de savoir le nombre de fois q'un livre a été emprunté.
+A chaque fois q'un même livre est emprunté, cette colonne est incrémentée de 1 s'il existe déjà dans table Emprunt.
+Ceci permet tres facilement de récupérer par exemple ISBN du livre le plus emprunté.
