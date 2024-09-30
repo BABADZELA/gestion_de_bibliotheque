@@ -12,19 +12,19 @@ Pour avoir une base préremplie avec des données dans les différentes tables (
 ce fichier en premier.
 
 J'ai opté pour l'insertion de 10 lignes dans la table "Livre" et 2 utulisateurs dans la table "User" de la base de données pour nos tests. 
-L'utulisatuer pourra bien sûr par la suite ajouter plusieurs autres livres et users.
+L'utulisateur pourra bien sûr par la suite ajouter plusieurs autres livres et users.
 
 ### Fonctionnement de l'application
 
-Après avoir exécuté le fichier db.py necessaire à  la création de la base de données, on exécute le fichier main.py pour lancer l'application.
+Après avoir exécuté le fichier db.py nécessaire à la création de la base de données, on exécute le fichier main.py pour lancer l'application.
 
 Attention!!!!! la création d'un utilisateur nécessite de spécifier de quel utulisateur s'agit-il.
-- Un administrateur (admin) a tous les droits sur base et peux donc tout faire 
+- Un administrateur (admin) a tous les droits sur base et peut donc tout faire 
 - Un étudiant a un accès restreint, il peut par exemple emprunter ou lister des livres, mais pas supprimer des livres.
 
-Après avoir exécuter la fonction main.py, l'utulisateur a les choix suivants pour les gestion de la bibliotheque:
+Après avoir exécuter le fichier main.py, l'utulisateur a les choix suivants pour les gestion de la bibliotheque:
 
-1. Il peut jouter un livre en spécifiant (le titre, l'auteur, l'isbn, le type du livre(papier/numerique))
+1. Il peut ajouter un livre en spécifiant (le titre, l'auteur, l'isbn, le type du livre(papier/numerique))
 2. Il peut supprimer un livre si son type est "admin"
 3. Rechercher un livre par son ISBN ou le nom d'auteur
 4. Ajouter un utlisateur
